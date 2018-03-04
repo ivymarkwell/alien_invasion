@@ -6,7 +6,7 @@ import pygame
 from alien import Alien
 from bullet import Bullet
 
-def check_events(ui_settings, screen, ship, bullets):
+def check_events(ui_settings, play_button, screen, stats, ship, bullets):
     ''' Respond to kepresses and mouse events '''
     # Watch for keyboard and mouse events
     for event in pygame.event.get():
@@ -18,6 +18,15 @@ def check_events(ui_settings, screen, ship, bullets):
 
         elif event.type == pygame.KEYUP:
             check_keyup_events(event, ship)
+
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            check_play_button(stats, play_button, mouse_x, mouse_y)
+
+def check_play_button(stats, play_button, mouse_x, mouse_y):
+    ''' Start a new game when the player clicks Play '''
+    if play_button.rect.collidepoint(mouse_x, mouse_y):
+        stats.game_active = True
 
 def update_screen(ui_settings, screen, ship, stats, aliens, bullets, play_button):
     ''' Update images on the screen and flip to the new screen '''
