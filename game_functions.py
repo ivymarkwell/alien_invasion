@@ -56,10 +56,18 @@ def check_keyup_events(event, ship):
         ship.moving_left = False
 
 def update_bullets(bullets):
-    # Get rid of bullets that have disappeared
+    ''' Get rid of bullets that have disappeared '''
     for bullet in bullets.copy():
         if bullet.rect.bottom <= 0:
             bullets.remove(bullet)
+
+def update_aliens(ui_settings, aliens):
+    '''
+    Check if the fleet is at an edge,
+    and then update the positions of all aliens in the fleet
+    '''
+    check_fleet_edges(ui_settings, aliens)
+    aliens.update()
 
 def fire_bullet(ui_settings, screen, ship, bullets):
     ''' Fire a bullet if limit not reached yet '''
@@ -101,3 +109,16 @@ def create_fleet(ui_settings, screen, ship, aliens):
     for row_number in range(number_rows):
         for alien_number in range(number_aliens_x):
             create_alien(ui_settings, screen, aliens, alien_number, row_number)
+
+def check_fleet_edges(ui_settings, aliens):
+    ''' Respond appropriately if any aliens have reached an edge '''
+    for alien in aliens.sprites():
+        if alien.check_edges():
+            change_fleet_direction(ui_settings, aliens)
+            break
+
+def change_fleet_direction(ui_settings, aliens):
+    ''' Drop the entire fleet and change the fleet's diection '''
+    for alien in aliens.sprites():
+        alien.rect.y += ui_settings.fleet_drop_speed
+    ui_settings.fleet_direction *= -1
