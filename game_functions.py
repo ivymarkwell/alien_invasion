@@ -6,7 +6,7 @@ import pygame
 from alien import Alien
 from bullet import Bullet
 
-def check_events(ui_settings, play_button, screen, stats, ship, bullets):
+def check_events(ui_settings, screen, stats, play_button, ship, aliens, bullets):
     ''' Respond to kepresses and mouse events '''
     # Watch for keyboard and mouse events
     for event in pygame.event.get():
@@ -21,12 +21,30 @@ def check_events(ui_settings, play_button, screen, stats, ship, bullets):
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_x, mouse_y = pygame.mouse.get_pos()
-            check_play_button(stats, play_button, mouse_x, mouse_y)
+            check_play_button(ui_settings, screen, stats, play_button, ship, aliens, bullets, mouse_x, mouse_y)
 
-def check_play_button(stats, play_button, mouse_x, mouse_y):
+def check_play_button(ui_settings, screen, stats, play_button, ship, aliens, bullets, mouse_x, mouse_y):
     ''' Start a new game when the player clicks Play '''
-    if play_button.rect.collidepoint(mouse_x, mouse_y):
+    button_clicked = play_button.rect.collidepoint(mouse_x, mouse_y)
+
+    if button_clicked and not stats.game_active:
+        # Reset the game settings
+        ui_settings.initalize_dyanmic_settings()
+
+        # Hide the mouse cursor
+        pygame.mouse.set_visible(False)
+
+        # Reset the game statistics
+        stats.reset_stats()
         stats.game_active = True
+
+        # Empty the list of aliens and bullets
+        aliens.empty()
+        bullets.empty()
+
+        # Create a new fleet and center the ship
+        create_fleet(ui_settings, screen, ship, aliens)
+        ship.center_ship()
 
 def update_screen(ui_settings, screen, ship, stats, aliens, bullets, play_button):
     ''' Update images on the screen and flip to the new screen '''
@@ -43,7 +61,6 @@ def update_screen(ui_settings, screen, ship, stats, aliens, bullets, play_button
     # Draw the play button if the game is inactive
     if not stats.game_active:
         play_button.draw_button()
-
 
     # Make the most recently drawn screen visibile
     pygame.display.flip()
@@ -84,8 +101,9 @@ def check_bullet_collisions(ui_settings, screen, ship, aliens, bullets):
     collisions = pygame.sprite.groupcollide(bullets, aliens, True, True)
 
     if len(aliens) == 0:
-        # Destroy existing bullets and create new fleet
+        # Destroy existing bullets, speed up game, and create new fleet
         bullets.empty()
+        ui_settings.increase_speed()
         create_fleet(ui_settings, screen, ship, aliens)
 
 def ship_hit(ui_settings, stats, screen, ship, aliens, bullets):
@@ -105,7 +123,9 @@ def ship_hit(ui_settings, stats, screen, ship, aliens, bullets):
         # Pause
         sleep(0.5)
 
-    else: stats.game_active = False
+    else:
+        stats.game_active = False
+        pygame.mouse.set_visible(True)
 
 def check_aliens_bottom(ui_settings, stats, screen, ship, aliens, bullets):
     ''' Check if any aliens have reached the bottom of the screen '''
