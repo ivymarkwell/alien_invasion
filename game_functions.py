@@ -2,7 +2,9 @@ import sys
 
 import pygame
 
-def check_events(ship):
+from bullet import Bullet
+
+def check_events(ui_settings, screen, ship, bullets):
     ''' Respond to kepresses and mouse events '''
     # Watch for keyboard and mouse events
     for event in pygame.event.get():
@@ -10,21 +12,26 @@ def check_events(ship):
             sys.exit()
 
         elif event.type == pygame.KEYDOWN:
-            check_keydown_events(event, ship)
+            check_keydown_events(event, ui_settings, screen, ship, bullets)
 
         elif event.type == pygame.KEYUP:
             check_keyup_events(event, ship)
 
-def update_screen(ui_settings, screen, ship):
+def update_screen(ui_settings, screen, ship, bullets):
     ''' Update images on the screen and flip to the new screen '''
     # Redraw the screen during each pass through the loop
     screen.fill(ui_settings.bg_color)
+
+    # Redraw all bullets behind ship and alien
+    for bullet in bullets.sprites():
+        bullet.draw_bullet()
+
     ship.blitme()
 
     # Make the most recently drawn screen visibile
     pygame.display.flip()
 
-def check_keydown_events(event, ship):
+def check_keydown_events(event, ui_settings, screen, ship, bullets):
     ''' Respond to keypresses '''
     if event.key == pygame.K_RIGHT:
         # Move the ship to the right
@@ -33,6 +40,11 @@ def check_keydown_events(event, ship):
     elif event.key == pygame.K_LEFT:
         # Move the ship to the left
         ship.moving_left = True
+
+    elif event.key == pygame.K_SPACE:
+        # Create a new bullet and add it to the bullets group
+        new_bullet = Bullet(ui_settings, screen, ship)
+        bullets.add(new_bullet)
 
 def check_keyup_events(event, ship):
     ''' Respond to key releases '''
