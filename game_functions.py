@@ -132,11 +132,14 @@ def check_high_score(stats, sb):
         stats.high_score = stats.score
         sb.prep_high_score()
 
-def ship_hit(ui_settings, stats, screen, ship, aliens, bullets):
+def ship_hit(ui_settings, stats, sb, screen, ship, aliens, bullets):
     ''' Respond to ship being hit by aliens '''
     if stats.ships_left > 0:
         # Decrement ships_left
         stats.ships_left -= 1
+
+        # Update scoreboard
+        sb.prep_ships()
 
         # Empty the list of aliens and bullets
         aliens.empty()
@@ -153,16 +156,16 @@ def ship_hit(ui_settings, stats, screen, ship, aliens, bullets):
         stats.game_active = False
         pygame.mouse.set_visible(True)
 
-def check_aliens_bottom(ui_settings, stats, screen, ship, aliens, bullets):
+def check_aliens_bottom(ui_settings, stats, sb, screen, ship, aliens, bullets):
     ''' Check if any aliens have reached the bottom of the screen '''
     screen_rect = screen.get_rect()
     for alien in aliens.sprites():
         if alien.rect.bottom >= screen_rect.bottom:
             # Treat this the same as if the ship got hit
-            ship_hit(ui_settings, stats, screen, ship, aliens, bullets)
+            ship_hit(ui_settings, stats, sb, screen, ship, aliens, bullets)
             break
 
-def update_aliens(ui_settings, stats, screen, ship, aliens, bullets):
+def update_aliens(ui_settings, stats, sb, screen, ship, aliens, bullets):
     '''
     Check if the fleet is at an edge,
     and then update the positions of all aliens in the fleet
@@ -172,10 +175,10 @@ def update_aliens(ui_settings, stats, screen, ship, aliens, bullets):
 
     # Look for alien-ship collisions
     if pygame.sprite.spritecollideany(ship, aliens):
-        ship_hit(ui_settings, stats, screen, ship, aliens, bullets)
+        ship_hit(ui_settings, stats, sb, screen, ship, aliens, bullets)
 
     # Look for aliens hitting the bottom of the screen
-    check_aliens_bottom(ui_settings, stats, screen, ship, aliens, bullets)
+    check_aliens_bottom(ui_settings, stats, sb, screen, ship, aliens, bullets)
 
 def fire_bullet(ui_settings, screen, ship, bullets):
     ''' Fire a bullet if limit not reached yet '''
