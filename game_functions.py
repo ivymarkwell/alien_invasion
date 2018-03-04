@@ -90,24 +90,37 @@ def check_keyup_events(event, ship):
     elif event.key == pygame.K_LEFT:
         ship.moving_left = False
 
-def update_bullets(ui_settings, screen, ship, aliens, bullets):
+def update_bullets(ui_settings, screen, ship, stats, sb, aliens, bullets):
     ''' Get rid of bullets that have disappeared '''
     for bullet in bullets.copy():
         if bullet.rect.bottom <= 0:
             bullets.remove(bullet)
 
-    check_bullet_collisions(ui_settings, screen, ship, aliens, bullets)
+    check_bullet_alien_collisions(ui_settings, screen, ship, stats, sb, aliens, bullets)
 
-def check_bullet_collisions(ui_settings, screen, ship, aliens, bullets):
+def check_bullet_alien_collisions(ui_settings, screen, ship, stats, sb, aliens, bullets):
     # Check for any bullets that have hit aliens
     # If so, get rid of the bullet and the alien
     collisions = pygame.sprite.groupcollide(bullets, aliens, True, True)
+
+    if collisions:
+        for aliens in collisions.values():
+            stats.score += ui_settings.alien_points * len(aliens)
+            sb.prep_score()
+
+        check_high_score(stats, sb)
 
     if len(aliens) == 0:
         # Destroy existing bullets, speed up game, and create new fleet
         bullets.empty()
         ui_settings.increase_speed()
         create_fleet(ui_settings, screen, ship, aliens)
+
+def check_high_score(stats, sb):
+    ''' Check to see if there's a new high score '''
+    if stats.score > stats.high_score:
+        stats.high_score = stats.score
+        sb.prep_high_score()
 
 def ship_hit(ui_settings, stats, screen, ship, aliens, bullets):
     ''' Respond to ship being hit by aliens '''
