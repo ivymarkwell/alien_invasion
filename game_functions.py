@@ -2,6 +2,7 @@ import sys
 
 import pygame
 
+from alien import Alien
 from bullet import Bullet
 
 def check_events(ui_settings, screen, ship, bullets):
@@ -17,7 +18,7 @@ def check_events(ui_settings, screen, ship, bullets):
         elif event.type == pygame.KEYUP:
             check_keyup_events(event, ship)
 
-def update_screen(ui_settings, screen, ship, bullets):
+def update_screen(ui_settings, screen, ship, aliens, bullets):
     ''' Update images on the screen and flip to the new screen '''
     # Redraw the screen during each pass through the loop
     screen.fill(ui_settings.bg_color)
@@ -27,6 +28,7 @@ def update_screen(ui_settings, screen, ship, bullets):
         bullet.draw_bullet()
 
     ship.blitme()
+    aliens.draw(screen)
 
     # Make the most recently drawn screen visibile
     pygame.display.flip()
@@ -53,14 +55,82 @@ def check_keyup_events(event, ship):
     elif event.key == pygame.K_LEFT:
         ship.moving_left = False
 
-def update_bullets(bullets):
-    # Get rid of bullets that have disappeared
+def update_bullets(ui_settings, screen, ship, aliens, bullets):
+    ''' Get rid of bullets that have disappeared '''
     for bullet in bullets.copy():
         if bullet.rect.bottom <= 0:
             bullets.remove(bullet)
+
+    check_bullet_collisions(ui_settings, screen, ship, aliens, bullets)
+
+def check_bullet_collisions(ui_settings, screen, ship, aliens, bullets):
+    # Check for any bullets that have hit aliens
+    # If so, get rid of the bullet and the alien
+    collisions = pygame.sprite.groupcollide(bullets, aliens, True, True)
+
+    if len(aliens) == 0:
+        # Destroy existing bullets and create new fleet
+        bullets.empty()
+        create_fleet(ui_settings, screen, ship, aliens)
+
+def update_aliens(ui_settings, aliens):
+    '''
+    Check if the fleet is at an edge,
+    and then update the positions of all aliens in the fleet
+    '''
+    check_fleet_edges(ui_settings, aliens)
+    aliens.update()
 
 def fire_bullet(ui_settings, screen, ship, bullets):
     ''' Fire a bullet if limit not reached yet '''
     if len(bullets) < ui_settings.bullets_allowed:
         new_bullet = Bullet(ui_settings, screen, ship)
         bullets.add(new_bullet)
+
+def get_number_aliens_x(ui_settings, alien_width):
+    ''' Determine the number of aliens that fit in a row '''
+    available_space_x = ui_settings.screen_width - (2 * alien_width)
+    number_aliens_x = int(available_space_x / (2 * alien_width))
+    return number_aliens_x
+
+def get_number_rows(ui_settings, ship_height, alien_height):
+    ''' Determine the number of rows of aliens that fit on the screen '''
+    available_space_y = ui_settings.screen_height - (3 * alien_height) - ship_height
+    number_rows = int(available_space_y / (2 * alien_height))
+    return number_rows
+
+def create_alien(ui_settings, screen, aliens, alien_number, row_number):
+    ''' Create an alien and place it in the row '''
+    alien = Alien(ui_settings, screen)
+    alien_width = alien.rect.width
+    alien.x = alien_width + 2 * alien_width * alien_number
+    alien.rect.x = alien.x
+    alien.rect.y = alien.rect.height + 2 * alien.rect.height * row_number
+    aliens.add(alien)
+
+def create_fleet(ui_settings, screen, ship, aliens):
+    ''' Create a fleet of aliens '''
+    # Create an alien and find the number of aliens in a row
+    # Spacing between each alien is equal to one alien width
+
+    alien = Alien(ui_settings, screen)
+    number_aliens_x = get_number_aliens_x(ui_settings, alien.rect.width)
+    number_rows = get_number_rows(ui_settings, ship.rect.height, alien.rect.height)
+
+    # Create the fleet of aliens
+    for row_number in range(number_rows):
+        for alien_number in range(number_aliens_x):
+            create_alien(ui_settings, screen, aliens, alien_number, row_number)
+
+def check_fleet_edges(ui_settings, aliens):
+    ''' Respond appropriately if any aliens have reached an edge '''
+    for alien in aliens.sprites():
+        if alien.check_edges():
+            change_fleet_direction(ui_settings, aliens)
+            break
+
+def change_fleet_direction(ui_settings, aliens):
+    ''' Drop the entire fleet and change the fleet's diection '''
+    for alien in aliens.sprites():
+        alien.rect.y += ui_settings.fleet_drop_speed
+    ui_settings.fleet_direction *= -1
