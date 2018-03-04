@@ -55,28 +55,31 @@ def check_keyup_events(event, ship):
     elif event.key == pygame.K_LEFT:
         ship.moving_left = False
 
-def update_bullets(aliens, bullets):
+def update_bullets(ui_settings, screen, ship, aliens, bullets):
     ''' Get rid of bullets that have disappeared '''
     for bullet in bullets.copy():
         if bullet.rect.bottom <= 0:
             bullets.remove(bullet)
 
+    check_bullet_collisions(ui_settings, screen, ship, aliens, bullets)
+
+def check_bullet_collisions(ui_settings, screen, ship, aliens, bullets):
     # Check for any bullets that have hit aliens
     # If so, get rid of the bullet and the alien
     collisions = pygame.sprite.groupcollide(bullets, aliens, True, True)
 
-def update_aliens(ui_settings, screen, ship, aliens, bullets):
+    if len(aliens) == 0:
+        # Destroy existing bullets and create new fleet
+        bullets.empty()
+        create_fleet(ui_settings, screen, ship, aliens)
+
+def update_aliens(ui_settings, aliens):
     '''
     Check if the fleet is at an edge,
     and then update the positions of all aliens in the fleet
     '''
     check_fleet_edges(ui_settings, aliens)
     aliens.update()
-
-    if len(aliens) == 0:
-        # Destroy existing bullets and create new fleet
-        bullets.empty()
-        create_fleet(ui_settings, screen, ship, aliens)
 
 def fire_bullet(ui_settings, screen, ship, bullets):
     ''' Fire a bullet if limit not reached yet '''
